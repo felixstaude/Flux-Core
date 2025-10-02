@@ -1,0 +1,15 @@
+package de.felixstaude.fluxcore;
+
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+
+public class Main {
+    public static void main(String[] args) {
+        Lwjgl3ApplicationConfiguration cfg = new Lwjgl3ApplicationConfiguration();
+        cfg.setTitle("FLUX CORE");
+        cfg.useVsync(true);
+        cfg.setBackBufferConfig(8,8,8,8,24,8,4); // MSAA x4
+        cfg.setWindowedMode(1280, 800);
+        new Lwjgl3Application(new FluxCore(), cfg);
+    }
+}
