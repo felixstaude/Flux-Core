@@ -16,7 +16,6 @@ public class Main {
         } else {
             cfg.setWindowedMode(1280, 800);
         }
-
         new Lwjgl3Application(new FluxCore(), cfg);
     }
 }
