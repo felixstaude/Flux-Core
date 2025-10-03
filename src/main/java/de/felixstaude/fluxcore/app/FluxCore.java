@@ -90,9 +90,9 @@ public class FluxCore extends ApplicationAdapter {
         player.x = Mathx.clamp(player.x, player.radius, Constants.ARENA_W - player.radius);
         player.y = Mathx.clamp(player.y, player.radius, Constants.ARENA_H - player.radius);
 
-        // Camera smooth follow + clamp to arena
-        float halfW = rc.worldCam.viewportWidth * 0.5f;
-        float halfH = rc.worldCam.viewportHeight * 0.5f;
+        // Camera smooth follow + clamp to arena (use FitViewport world dimensions)
+        float halfW = rc.worldVp.getWorldWidth() * 0.5f;   // 2400 / 2 = 1200
+        float halfH = rc.worldVp.getWorldHeight() * 0.5f;  // 1600 / 2 = 800
         // follow
         rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, player.x, Constants.CAM_LERP);
         rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, player.y, Constants.CAM_LERP);
