@@ -27,9 +27,6 @@ public class FluxCore extends ApplicationAdapter {
     private int hp = 100;
     private int maxHp = 100;
     private int energy = 0;
-    private int kills = 0;
-    private int wave = 1;
-    private float timeLeft = 180f;
 
     @Override
     public void create() {
@@ -88,16 +85,21 @@ public class FluxCore extends ApplicationAdapter {
         player.x = Mathx.clamp(player.x, player.radius, Constants.ARENA_W - player.radius);
         player.y = Mathx.clamp(player.y, player.radius, Constants.ARENA_H - player.radius);
 
-        // Camera smooth follow (no clamp)
+        // Camera smooth follow + clamp to arena
+        float halfW = rc.worldCam.viewportWidth * 0.5f;
+        float halfH = rc.worldCam.viewportHeight * 0.5f;
+        // follow
         rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, player.x, Constants.CAM_LERP);
         rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, player.y, Constants.CAM_LERP);
+        // clamp to arena
+        rc.worldCam.position.x = MathUtils.clamp(rc.worldCam.position.x, halfW, Constants.ARENA_W - halfW);
+        rc.worldCam.position.y = MathUtils.clamp(rc.worldCam.position.y, halfH, Constants.ARENA_H - halfH);
+        rc.worldCam.update();
 
         // Apply world VP
         rc.applyWorld();
 
         // Camera extents for infinite grid tiling
-        float halfW = rc.worldCam.viewportWidth * 0.5f;
-        float halfH = rc.worldCam.viewportHeight * 0.5f;
         float left = rc.worldCam.position.x - halfW;
         float right = rc.worldCam.position.x + halfW;
         float bottom = rc.worldCam.position.y - halfH;
@@ -134,9 +136,7 @@ public class FluxCore extends ApplicationAdapter {
         rc.shapes.end();
 
         // Update and draw HUD
-        timeLeft -= dt;
-        if (timeLeft < 0) timeLeft = 0;
-        hud.setValues(wave, timeLeft, hp, maxHp, energy, kills);
+        hud.update(hp, maxHp, energy);
         hud.act(dt);
         hud.draw();
     }
