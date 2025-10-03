@@ -88,27 +88,43 @@ public class FluxCore extends ApplicationAdapter {
         player.x = Mathx.clamp(player.x, player.radius, Constants.ARENA_W - player.radius);
         player.y = Mathx.clamp(player.y, player.radius, Constants.ARENA_H - player.radius);
 
-        // Camera smooth follow with edge clamping
-        float halfW = rc.worldCam.viewportWidth * 0.5f;
-        float halfH = rc.worldCam.viewportHeight * 0.5f;
-        float targetX = Mathx.clamp(player.x, halfW, Constants.ARENA_W - halfW);
-        float targetY = Mathx.clamp(player.y, halfH, Constants.ARENA_H - halfH);
-        rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, targetX, Constants.CAM_LERP);
-        rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, targetY, Constants.CAM_LERP);
+        // Camera smooth follow (no clamp)
+        rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, player.x, Constants.CAM_LERP);
+        rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, player.y, Constants.CAM_LERP);
 
         // Apply world VP
         rc.applyWorld();
 
-        // Grid (minor 50)
+        // Camera extents for infinite grid tiling
+        float halfW = rc.worldCam.viewportWidth * 0.5f;
+        float halfH = rc.worldCam.viewportHeight * 0.5f;
+        float left = rc.worldCam.position.x - halfW;
+        float right = rc.worldCam.position.x + halfW;
+        float bottom = rc.worldCam.position.y - halfH;
+        float top = rc.worldCam.position.y + halfH;
+
+        // Grid (minor 50) - tile across camera
         rc.shapes.begin(ShapeRenderer.ShapeType.Line);
         rc.shapes.setColor(Palette.GRID_MINOR);
-        for (int x = 0; x <= Constants.ARENA_W; x += Constants.GRID_MINOR) rc.shapes.line(x, 0, x, Constants.ARENA_H);
-        for (int y = 0; y <= Constants.ARENA_H; y += Constants.GRID_MINOR) rc.shapes.line(0, y, Constants.ARENA_W, y);
+        int stepMinor = Constants.GRID_MINOR;
+        float sxMinor = (float) Math.floor(left / stepMinor) * stepMinor;
+        float syMinor = (float) Math.floor(bottom / stepMinor) * stepMinor;
+        for (float x = sxMinor; x <= right; x += stepMinor) rc.shapes.line(x, bottom, x, top);
+        for (float y = syMinor; y <= top; y += stepMinor) rc.shapes.line(left, y, right, y);
 
-        // Grid (major 250)
+        // Grid (major 250) - tile across camera
         rc.shapes.setColor(Palette.GRID_MAJOR);
-        for (int x = 0; x <= Constants.ARENA_W; x += Constants.GRID_MAJOR) rc.shapes.line(x, 0, x, Constants.ARENA_H);
-        for (int y = 0; y <= Constants.ARENA_H; y += Constants.GRID_MAJOR) rc.shapes.line(0, y, Constants.ARENA_W, y);
+        int stepMajor = Constants.GRID_MAJOR;
+        float sxMajor = (float) Math.floor(left / stepMajor) * stepMajor;
+        float syMajor = (float) Math.floor(bottom / stepMajor) * stepMajor;
+        for (float x = sxMajor; x <= right; x += stepMajor) rc.shapes.line(x, bottom, x, top);
+        for (float y = syMajor; y <= top; y += stepMajor) rc.shapes.line(left, y, right, y);
+        rc.shapes.end();
+
+        // Arena border
+        rc.shapes.begin(ShapeRenderer.ShapeType.Line);
+        rc.shapes.setColor(Palette.ARENA_BORDER);
+        rc.shapes.rect(0, 0, Constants.ARENA_W, Constants.ARENA_H);
         rc.shapes.end();
 
         // Player (cyan)
