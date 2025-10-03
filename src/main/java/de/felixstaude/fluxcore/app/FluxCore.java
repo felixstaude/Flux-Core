@@ -45,6 +45,11 @@ public class FluxCore extends ApplicationAdapter {
             Gdx.app.exit();
         }
 
+        // F2 → toggle debug viewport bounds
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
+            rc.debugViewportBounds = !rc.debugViewportBounds;
+        }
+
         // Clear
         Gdx.gl.glClearColor(Palette.BACKDROP.r, Palette.BACKDROP.g, Palette.BACKDROP.b, Palette.BACKDROP.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -139,6 +144,9 @@ public class FluxCore extends ApplicationAdapter {
         hud.update(hp, maxHp, energy);
         hud.act(dt);
         hud.draw();
+
+        // Debug viewport bounds (F2 toggle)
+        rc.drawDebugViewportBounds();
     }
 
     private float accelerateTowards(float current, float target, float dt) {
