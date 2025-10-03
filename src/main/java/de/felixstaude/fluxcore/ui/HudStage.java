@@ -1,5 +1,6 @@
 package de.felixstaude.fluxcore.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -12,8 +13,6 @@ public class HudStage {
     private final Stage stage;
     private final ShapeRenderer shapeRenderer;
 
-    private Label waveTimerLabel;
-    private Label killsLabel;
     private Label energyLabel;
 
     private int hp = 100;
@@ -28,47 +27,34 @@ public class HudStage {
 
         Label.LabelStyle style = new Label.LabelStyle(UiAssets.defaultFont, Color.WHITE);
 
-        waveTimerLabel = new Label("WAVE 1  •  00:00", style);
-        killsLabel = new Label("Kills: 0", style);
         energyLabel = new Label("Energy: 0", style);
 
-        stage.addActor(waveTimerLabel);
-        stage.addActor(killsLabel);
         stage.addActor(energyLabel);
 
-        hpBarWidth = 200f;
-        hpBarHeight = 20f;
+        hpBarWidth = 180f;
+        hpBarHeight = 14f;
     }
 
-    public void setValues(int wave, float timeLeftSec, int hp, int maxHp, int energy, int kills) {
+    public void update(int hp, int maxHp, int energy) {
         this.hp = hp;
         this.maxHp = maxHp;
         this.energy = energy;
 
-        int min = (int) (timeLeftSec / 60);
-        int sec = (int) (timeLeftSec % 60);
-        waveTimerLabel.setText(String.format("WAVE %d  •  %02d:%02d", wave, min, sec));
-        killsLabel.setText(String.format("Kills: %d", kills));
         energyLabel.setText(String.format("Energy: %d", energy));
     }
 
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
 
-        int mx = Constants.SCREEN_MARGIN;
+        int m = Constants.SCREEN_MARGIN;
+        int yTop = Gdx.graphics.getHeight() - m;
 
         // HP bar top-left (inside margin)
-        hpBarX = mx + 16;
-        hpBarY = height - mx - 16 - hpBarHeight;
+        hpBarX = m + 10;
+        hpBarY = yTop - 20 - hpBarHeight;
 
         // Energy label below HP bar
-        energyLabel.setPosition(hpBarX, hpBarY - 30, Align.left);
-
-        // Wave/Timer top-center
-        waveTimerLabel.setPosition(width / 2f, height - mx - 16, Align.top);
-
-        // Kills top-right
-        killsLabel.setPosition(width - mx - 16, height - mx - 16, Align.topRight);
+        energyLabel.setPosition(hpBarX, hpBarY - 25, Align.left);
     }
 
     public void act(float delta) {
