@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import de.felixstaude.fluxcore.core.RenderContext;
 import de.felixstaude.fluxcore.entity.Player;
+import de.felixstaude.fluxcore.ui.HudStage;
+import de.felixstaude.fluxcore.ui.UiAssets;
 import de.felixstaude.fluxcore.util.AxisLatch;
 import de.felixstaude.fluxcore.util.Mathx;
 import de.felixstaude.fluxcore.util.Palette;
@@ -19,13 +21,24 @@ public class FluxCore extends ApplicationAdapter {
     private Player player;
     private AxisLatch xLatch = new AxisLatch();
     private AxisLatch yLatch = new AxisLatch();
+    private HudStage hud;
+
+    // HUD demo values
+    private int hp = 100;
+    private int maxHp = 100;
+    private int energy = 0;
+    private int kills = 0;
+    private int wave = 1;
+    private float timeLeft = 180f;
 
     @Override
     public void create() {
+        UiAssets.load();
         rc = new RenderContext();
         player = new Player(Constants.ARENA_W / 2f, Constants.ARENA_H / 2f);
         rc.worldCam.position.set(player.x, player.y, 0);
         rc.worldCam.update();
+        hud = new HudStage();
     }
 
     @Override
@@ -75,9 +88,13 @@ public class FluxCore extends ApplicationAdapter {
         player.x = Mathx.clamp(player.x, player.radius, Constants.ARENA_W - player.radius);
         player.y = Mathx.clamp(player.y, player.radius, Constants.ARENA_H - player.radius);
 
-        // Camera smooth follow
-        rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, player.x, Constants.CAM_LERP);
-        rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, player.y, Constants.CAM_LERP);
+        // Camera smooth follow with edge clamping
+        float halfW = rc.worldCam.viewportWidth * 0.5f;
+        float halfH = rc.worldCam.viewportHeight * 0.5f;
+        float targetX = Mathx.clamp(player.x, halfW, Constants.ARENA_W - halfW);
+        float targetY = Mathx.clamp(player.y, halfH, Constants.ARENA_H - halfH);
+        rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, targetX, Constants.CAM_LERP);
+        rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, targetY, Constants.CAM_LERP);
 
         // Apply world VP
         rc.applyWorld();
@@ -99,6 +116,13 @@ public class FluxCore extends ApplicationAdapter {
         rc.shapes.setColor(Color.valueOf("00D1FFFF"));
         rc.shapes.circle(player.x, player.y, player.radius, 32);
         rc.shapes.end();
+
+        // Update and draw HUD
+        timeLeft -= dt;
+        if (timeLeft < 0) timeLeft = 0;
+        hud.setValues(wave, timeLeft, hp, maxHp, energy, kills);
+        hud.act(dt);
+        hud.draw();
     }
 
     private float accelerateTowards(float current, float target, float dt) {
@@ -114,6 +138,16 @@ public class FluxCore extends ApplicationAdapter {
         return current + step;
     }
 
-    @Override public void resize(int w, int h) { rc.resize(w, h); }
-    @Override public void dispose() { rc.dispose(); }
+    @Override
+    public void resize(int w, int h) {
+        rc.resize(w, h);
+        hud.resize(w, h);
+    }
+
+    @Override
+    public void dispose() {
+        rc.dispose();
+        hud.dispose();
+        UiAssets.dispose();
+    }
 }

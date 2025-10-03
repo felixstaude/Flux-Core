@@ -12,4 +12,7 @@ public class Constants {
     public static final float MOVE_ACCEL = 1800f;
     public static final float MOVE_DECEL = 1400f;
     public static final float CAM_LERP = 0.12f;
+
+    // UI/Screen
+    public static final int SCREEN_MARGIN = 100;
 }
