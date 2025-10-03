@@ -5,12 +5,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import de.felixstaude.fluxcore.world.Constants;
 
 public class RenderContext {
     public final OrthographicCamera worldCam;
-    public final ScreenViewport worldVp;
+    public final FitViewport worldVp;
     public final ShapeRenderer shapes;
     public final SpriteBatch batch;
 
@@ -18,7 +18,7 @@ public class RenderContext {
 
     public RenderContext() {
         worldCam = new OrthographicCamera();
-        worldVp = new ScreenViewport(worldCam);
+        worldVp = new FitViewport(Constants.ARENA_W, Constants.ARENA_H, worldCam);
         shapes = new ShapeRenderer();
         batch = new SpriteBatch();
     }
@@ -36,14 +36,9 @@ public class RenderContext {
         int m = Constants.SCREEN_MARGIN;
         int vw = Math.max(1, width - 2 * m);
         int vh = Math.max(1, height - 2 * m);
-        int sx = m;
-        int sy = m;
 
-        worldVp.setScreenBounds(sx, sy, vw, vh);
+        worldVp.setScreenBounds(m, m, vw, vh);
         worldVp.update(vw, vh, false);
-
-        worldCam.viewportWidth = vw;
-        worldCam.viewportHeight = vh;
         worldCam.update();
     }
 
