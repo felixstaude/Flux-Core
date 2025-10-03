@@ -30,12 +30,13 @@ public class RenderContext {
     }
 
     public void resize(int width, int height) {
-        int mx = Constants.SCREEN_MARGIN;
-        int my = Constants.SCREEN_MARGIN;
-        int vw = Math.max(1, width - 2 * mx);
-        int vh = Math.max(1, height - 2 * my);
+        int m = Constants.SCREEN_MARGIN;
+        int vw = Math.max(1, width - 2 * m);
+        int vh = Math.max(1, height - 2 * m);
+        int sx = m;
+        int sy = m;
 
-        worldVp.setScreenBounds(mx, my, vw, vh);
+        worldVp.setScreenBounds(sx, sy, vw, vh);
         worldVp.update(vw, vh, false);
 
         worldCam.viewportWidth = vw;
