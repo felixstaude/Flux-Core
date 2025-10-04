@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import de.felixstaude.fluxcore.core.RenderContext;
 import de.felixstaude.fluxcore.entity.Player;
+import de.felixstaude.fluxcore.ui.HudStage;
+import de.felixstaude.fluxcore.ui.UiAssets;
 import de.felixstaude.fluxcore.util.AxisLatch;
 import de.felixstaude.fluxcore.util.Mathx;
 import de.felixstaude.fluxcore.util.Palette;
@@ -19,13 +21,21 @@ public class FluxCore extends ApplicationAdapter {
     private Player player;
     private AxisLatch xLatch = new AxisLatch();
     private AxisLatch yLatch = new AxisLatch();
+    private HudStage hud;
+
+    // HUD demo values
+    private int hp = 100;
+    private int maxHp = 100;
+    private int energy = 0;
 
     @Override
     public void create() {
+        UiAssets.load();
         rc = new RenderContext();
         player = new Player(Constants.ARENA_W / 2f, Constants.ARENA_H / 2f);
         rc.worldCam.position.set(player.x, player.y, 0);
         rc.worldCam.update();
+        hud = new HudStage();
     }
 
     @Override
@@ -33,6 +43,11 @@ public class FluxCore extends ApplicationAdapter {
         // ESC → quit
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
+        }
+
+        // F2 → toggle debug viewport bounds
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
+            rc.debugViewportBounds = !rc.debugViewportBounds;
         }
 
         // Clear
@@ -75,23 +90,48 @@ public class FluxCore extends ApplicationAdapter {
         player.x = Mathx.clamp(player.x, player.radius, Constants.ARENA_W - player.radius);
         player.y = Mathx.clamp(player.y, player.radius, Constants.ARENA_H - player.radius);
 
-        // Camera smooth follow
+        // Camera smooth follow + clamp to arena (use FitViewport world dimensions)
+        float halfW = rc.worldVp.getWorldWidth() * 0.5f;   // 2400 / 2 = 1200
+        float halfH = rc.worldVp.getWorldHeight() * 0.5f;  // 1600 / 2 = 800
+        // follow
         rc.worldCam.position.x = MathUtils.lerp(rc.worldCam.position.x, player.x, Constants.CAM_LERP);
         rc.worldCam.position.y = MathUtils.lerp(rc.worldCam.position.y, player.y, Constants.CAM_LERP);
+        // clamp to arena
+        rc.worldCam.position.x = MathUtils.clamp(rc.worldCam.position.x, halfW, Constants.ARENA_W - halfW);
+        rc.worldCam.position.y = MathUtils.clamp(rc.worldCam.position.y, halfH, Constants.ARENA_H - halfH);
+        rc.worldCam.update();
 
         // Apply world VP
         rc.applyWorld();
 
-        // Grid (minor 50)
+        // Camera extents for infinite grid tiling
+        float left = rc.worldCam.position.x - halfW;
+        float right = rc.worldCam.position.x + halfW;
+        float bottom = rc.worldCam.position.y - halfH;
+        float top = rc.worldCam.position.y + halfH;
+
+        // Grid (minor 50) - tile across camera
         rc.shapes.begin(ShapeRenderer.ShapeType.Line);
         rc.shapes.setColor(Palette.GRID_MINOR);
-        for (int x = 0; x <= Constants.ARENA_W; x += Constants.GRID_MINOR) rc.shapes.line(x, 0, x, Constants.ARENA_H);
-        for (int y = 0; y <= Constants.ARENA_H; y += Constants.GRID_MINOR) rc.shapes.line(0, y, Constants.ARENA_W, y);
+        int stepMinor = Constants.GRID_MINOR;
+        float sxMinor = (float) Math.floor(left / stepMinor) * stepMinor;
+        float syMinor = (float) Math.floor(bottom / stepMinor) * stepMinor;
+        for (float x = sxMinor; x <= right; x += stepMinor) rc.shapes.line(x, bottom, x, top);
+        for (float y = syMinor; y <= top; y += stepMinor) rc.shapes.line(left, y, right, y);
 
-        // Grid (major 250)
+        // Grid (major 250) - tile across camera
         rc.shapes.setColor(Palette.GRID_MAJOR);
-        for (int x = 0; x <= Constants.ARENA_W; x += Constants.GRID_MAJOR) rc.shapes.line(x, 0, x, Constants.ARENA_H);
-        for (int y = 0; y <= Constants.ARENA_H; y += Constants.GRID_MAJOR) rc.shapes.line(0, y, Constants.ARENA_W, y);
+        int stepMajor = Constants.GRID_MAJOR;
+        float sxMajor = (float) Math.floor(left / stepMajor) * stepMajor;
+        float syMajor = (float) Math.floor(bottom / stepMajor) * stepMajor;
+        for (float x = sxMajor; x <= right; x += stepMajor) rc.shapes.line(x, bottom, x, top);
+        for (float y = syMajor; y <= top; y += stepMajor) rc.shapes.line(left, y, right, y);
+        rc.shapes.end();
+
+        // Arena border
+        rc.shapes.begin(ShapeRenderer.ShapeType.Line);
+        rc.shapes.setColor(Palette.ARENA_BORDER);
+        rc.shapes.rect(0, 0, Constants.ARENA_W, Constants.ARENA_H);
         rc.shapes.end();
 
         // Player (cyan)
@@ -99,6 +139,14 @@ public class FluxCore extends ApplicationAdapter {
         rc.shapes.setColor(Color.valueOf("00D1FFFF"));
         rc.shapes.circle(player.x, player.y, player.radius, 32);
         rc.shapes.end();
+
+        // Update and draw HUD
+        hud.update(hp, maxHp, energy);
+        hud.act(dt);
+        hud.draw();
+
+        // Debug viewport bounds (F2 toggle)
+        rc.drawDebugViewportBounds();
     }
 
     private float accelerateTowards(float current, float target, float dt) {
@@ -114,6 +162,16 @@ public class FluxCore extends ApplicationAdapter {
         return current + step;
     }
 
-    @Override public void resize(int w, int h) { rc.resize(w, h); }
-    @Override public void dispose() { rc.dispose(); }
+    @Override
+    public void resize(int w, int h) {
+        rc.resize(w, h);
+        hud.resize(w, h);
+    }
+
+    @Override
+    public void dispose() {
+        rc.dispose();
+        hud.dispose();
+        UiAssets.dispose();
+    }
 }

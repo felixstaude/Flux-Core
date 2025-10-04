@@ -29,4 +29,21 @@ class ViewportMathTest {
         assertEquals(50, Constants.GRID_MINOR);
         assertEquals(250, Constants.GRID_MAJOR);
     }
+
+    @Test
+    void viewport_1920x1080_withMargin100_produces1720x880() {
+        int screenW = 1920;
+        int screenH = 1080;
+        int m = Constants.SCREEN_MARGIN;
+
+        int vw = screenW - 2 * m;
+        int vh = screenH - 2 * m;
+        int x = m;
+        int y = m;
+
+        assertEquals(1720, vw);
+        assertEquals(880, vh);
+        assertEquals(100, x);
+        assertEquals(100, y);
+    }
 }
